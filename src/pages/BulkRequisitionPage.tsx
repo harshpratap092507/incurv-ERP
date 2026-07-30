@@ -1,5 +1,11 @@
-import { useMemo, useReducer, useState } from "react";
-import { derive, initialState, reducer } from "../state";
+import { useMemo, useReducer, useRef, useState } from "react";
+import {
+  clearPersistedState,
+  derive,
+  loadInitialState,
+  persistState,
+  reducer,
+} from "../state";
 import { Stepper } from "../components/Stepper";
 import { DetailsCard } from "../components/DetailsCard";
 import { LinesTable, type LineFilter } from "../components/LinesTable";
@@ -7,14 +13,34 @@ import { SummarySidebar } from "../components/SummarySidebar";
 import { BottomBar } from "../components/BottomBar";
 
 export function BulkRequisitionPage() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, undefined, loadInitialState);
   const [filter, setFilter] = useState<LineFilter>("all");
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const savedTimeout = useRef<number | undefined>(undefined);
   const derived = useMemo(() => derive(state.lines), [state.lines]);
 
   const scrollToLine = (lineId: number) => {
     document
       .getElementById(`line-${lineId}`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleSaveDraft = () => {
+    persistState(state);
+    setSavedMessage("Draft saved");
+    window.clearTimeout(savedTimeout.current);
+    savedTimeout.current = window.setTimeout(() => setSavedMessage(null), 2500);
+  };
+
+  const handleDiscard = () => {
+    if (!window.confirm("Discard this draft? All unsaved changes will be lost.")) {
+      return;
+    }
+    clearPersistedState();
+    dispatch({ type: "reset" });
+    setSavedMessage("Draft discarded");
+    window.clearTimeout(savedTimeout.current);
+    savedTimeout.current = window.setTimeout(() => setSavedMessage(null), 2500);
   };
 
   return (
@@ -26,8 +52,13 @@ export function BulkRequisitionPage() {
           <span className="doc-number">PR-2026-0091</span>
         </div>
         <div className="page-header-actions">
-          <button className="btn btn-danger-text">Discard</button>
-          <button className="btn btn-secondary">Save Draft</button>
+          {savedMessage && <span className="save-toast">✓ {savedMessage}</span>}
+          <button className="btn btn-danger-text" onClick={handleDiscard}>
+            Discard
+          </button>
+          <button className="btn btn-secondary" onClick={handleSaveDraft}>
+            Save Draft
+          </button>
           <button
             className="btn btn-primary"
             disabled={derived.errorCount > 0 || derived.validCount === 0}

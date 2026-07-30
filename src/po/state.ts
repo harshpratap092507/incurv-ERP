@@ -1,5 +1,6 @@
 import type { POHeader, POLine, POLineStatus, VendorDetails } from "./types";
 import { findCatalogItem } from "../catalog";
+import { clearDraft, loadDraft, saveDraft } from "../lib/draftStorage";
 
 let nextId = 900;
 const newId = () => ++nextId;
@@ -77,7 +78,8 @@ export type POAction =
   | { type: "updateLine"; id: number; patch: Partial<POLine> }
   | { type: "setItemCode"; id: number; code: string }
   | { type: "duplicateLine"; id: number }
-  | { type: "deleteLine"; id: number };
+  | { type: "deleteLine"; id: number }
+  | { type: "reset" };
 
 export function poReducer(state: POState, action: POAction): POState {
   switch (action.type) {
@@ -130,7 +132,24 @@ export function poReducer(state: POState, action: POAction): POState {
 
     case "deleteLine":
       return { ...state, lines: state.lines.filter((line) => line.id !== action.id) };
+
+    case "reset":
+      return initialPOState;
   }
+}
+
+const PO_DRAFT_KEY = "incurv-erp:po-draft";
+
+export function loadInitialPOState(): POState {
+  return loadDraft<POState>(PO_DRAFT_KEY, initialPOState);
+}
+
+export function persistPOState(state: POState): void {
+  saveDraft<POState>(PO_DRAFT_KEY, state);
+}
+
+export function clearPersistedPOState(): void {
+  clearDraft(PO_DRAFT_KEY);
 }
 
 export function poLineStatus(line: POLine): POLineStatus {

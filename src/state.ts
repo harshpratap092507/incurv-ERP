@@ -5,6 +5,7 @@ import type {
   RequisitionLine,
 } from "./types";
 import { findCatalogItem } from "./catalog";
+import { clearDraft, loadDraft, saveDraft } from "./lib/draftStorage";
 
 let nextId = 100;
 const newId = () => ++nextId;
@@ -98,7 +99,8 @@ export type Action =
   | { type: "deleteLine"; id: number }
   | { type: "toggleSelect"; id: number }
   | { type: "toggleSelectAll" }
-  | { type: "deleteSelected" };
+  | { type: "deleteSelected" }
+  | { type: "reset" };
 
 export function reducer(state: FormState, action: Action): FormState {
   switch (action.type) {
@@ -182,7 +184,31 @@ export function reducer(state: FormState, action: Action): FormState {
         selected: new Set(),
         lines: state.lines.filter((line) => !state.selected.has(line.id)),
       };
+
+    case "reset":
+      return initialState;
   }
+}
+
+const DRAFT_KEY = "incurv-erp:requisition-draft";
+
+interface StoredFormState {
+  header: RequisitionHeader;
+  lines: RequisitionLine[];
+}
+
+export function loadInitialState(): FormState {
+  const stored = loadDraft<StoredFormState | null>(DRAFT_KEY, null);
+  if (!stored) return initialState;
+  return { header: stored.header, lines: stored.lines, selected: new Set() };
+}
+
+export function persistState(state: FormState): void {
+  saveDraft<StoredFormState>(DRAFT_KEY, { header: state.header, lines: state.lines });
+}
+
+export function clearPersistedState(): void {
+  clearDraft(DRAFT_KEY);
 }
 
 export function lineStatus(line: RequisitionLine): LineStatus {

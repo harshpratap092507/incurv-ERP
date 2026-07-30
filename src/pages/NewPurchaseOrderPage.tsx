@@ -1,5 +1,5 @@
-import { useMemo, useReducer } from "react";
-import { derivePO, initialPOState, poReducer } from "../po/state";
+import { useMemo, useReducer, useRef, useState } from "react";
+import { derivePO, loadInitialPOState, persistPOState, poReducer } from "../po/state";
 import { Stepper } from "../components/Stepper";
 import { HeaderInfoCard } from "../po/components/HeaderInfoCard";
 import { VendorDetailsCard } from "../po/components/VendorDetailsCard";
@@ -8,13 +8,26 @@ import { POSummarySidebar } from "../po/components/POSummarySidebar";
 import { RemarksAttachments } from "../po/components/RemarksAttachments";
 
 export function NewPurchaseOrderPage() {
-  const [state, dispatch] = useReducer(poReducer, initialPOState);
+  const [state, dispatch] = useReducer(poReducer, undefined, loadInitialPOState);
   const derived = useMemo(() => derivePO(state.lines), [state.lines]);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const savedTimeout = useRef<number | undefined>(undefined);
 
   const scrollToLine = (lineId: number) => {
     document
       .querySelector(`[data-line-id="${lineId}"]`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleSaveDraft = () => {
+    persistPOState(state);
+    setSavedMessage("Draft saved");
+    window.clearTimeout(savedTimeout.current);
+    savedTimeout.current = window.setTimeout(() => setSavedMessage(null), 2500);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -25,8 +38,13 @@ export function NewPurchaseOrderPage() {
           <span className="badge badge-draft">DRAFT</span>
         </div>
         <div className="page-header-actions">
-          <button className="btn btn-secondary">Print / Export</button>
-          <button className="btn btn-secondary">Save as Draft</button>
+          {savedMessage && <span className="save-toast">✓ {savedMessage}</span>}
+          <button className="btn btn-secondary" onClick={handlePrint}>
+            Print / Export
+          </button>
+          <button className="btn btn-secondary" onClick={handleSaveDraft}>
+            Save as Draft
+          </button>
           <button
             className="btn btn-primary"
             disabled={derived.errorCount > 0 || derived.validCount === 0}

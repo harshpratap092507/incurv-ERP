@@ -101,6 +101,11 @@ body {
   color: #fff;
 }
 
+.nav-item-active:hover {
+  background: var(--blue-dark);
+  color: #fff;
+}
+
 .nav-icon {
   width: 18px;
   text-align: center;
@@ -257,7 +262,15 @@ a.nav-child {
 
 .page-header-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
+}
+
+.save-toast {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 /* ---------- Buttons & badges ---------- */
@@ -1053,6 +1066,17 @@ tfoot td {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+}
+
+.dropzone:hover {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.dropzone-active {
+  border-color: var(--blue);
+  background: var(--blue-soft);
 }
 
 .dropzone strong {
@@ -1065,8 +1089,14 @@ tfoot td {
   color: var(--blue);
 }
 
-.attachment-chip {
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 10px;
+}
+
+.attachment-chip {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1075,6 +1105,18 @@ tfoot td {
   border-radius: 8px;
   padding: 7px 10px;
   font-weight: 600;
+  gap: 10px;
+}
+
+.attachment-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-name small {
+  color: var(--ink-soft);
+  font-weight: 500;
 }
 
 .audit-line {
@@ -1090,5 +1132,43 @@ tfoot td {
   .po-two-col,
   .po-footer-cards {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .sidebar,
+  .topbar,
+  .stepper,
+  .page-header-actions,
+  .bottom-bar,
+  .dropzone,
+  .col-actions,
+  .icon-btn,
+  .add-row-ghost,
+  .save-toast {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .main {
+    padding-bottom: 0;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-col {
+    position: static;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    break-inside: avoid;
   }
 }
